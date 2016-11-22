@@ -1,0 +1,140 @@
+{
+    "name": "service-instance_f2f05a16-41d4-4a11-9758-9a56e0897c78",
+    "releases": [{
+        "name": "aerospike-release",
+        "version": "0.6"
+    }],
+    "stemcells": [{
+        "alias": "only-stemcell",
+        "os": "ubuntu-trusty",
+        "version": "3262.12"
+    }],
+    "instance_groups": [{
+        "name": "aerospike-server",
+        "instances": 1,
+        "jobs": [{
+            "name": "aerospike-server",
+            "release": "aerospike-release",
+            "properties": {
+                "address": "aerospike-server-service-instance_f2f05a16-41d4-4a11-9758-9a56e0897c78",
+                "cf": {
+                    "admin_password": "MLPCPW-xCstGFtYo3MGWns_5yuldzJr2",
+                    "admin_username": "system_services",
+                    "api_url": "https://api.run.pez.pivotal.io",
+                    "app_domains": ["cfapps.pez.pivotal.io"],
+                    "disable_ssl_cert_verification": true,
+                    "domain": "run.pez.pivotal.io",
+                    "nats": {
+                        "host": "10.65.11.13",
+                        "password": "asfdsaf",
+                        "port": 4222,
+                        "username": "nats"
+                    }
+                },
+                "aerospike-server": {
+                    "listen_port": 8080,
+                    "memory": {
+                        "max_heap": 1024,
+                        "min_heap": 1024
+                    },
+                    "password": "admin",
+                    "username": "admin"
+                },
+                "network": "service",
+                "password": "adsfsadf",
+                "username": "asdfdas"
+            }
+        }],
+        "vm_type": "small",
+        "stemcell": "only-stemcell",
+        "azs": ["tenant-RP1"],
+        "networks": [{
+            "name": "service"
+        }]
+    }, {
+        "name": "aerospike-amc",
+        "instances": 1,
+        "jobs": [{
+            "name": "aerospike-amc",
+            "release": "aerospike-release",
+            "properties": {
+                "address": "aerospike-amc-service-instance_f2f05a16-41d4-4a11-9758-9a56e0897c78",
+                "cf": {
+                    "admin_password": "asdfasfdsa",
+                    "admin_username": "system_services",
+                    "api_url": "https://api.pez.pivotal.io",
+                    "app_domains": ["cfapps.pez.pivotal.io"],
+                    "disable_ssl_cert_verification": true,
+                    "domain": "run.pez.pivotal.io",
+                    "nats": {
+                        "host": "10.65.11.13",
+                        "password": "Ssasdfasf",
+                        "port": 4222,
+                        "username": "nats"
+                    }
+                },
+                "aerospike-server_admin_password": "Gsasdfasz",
+                "aerospike-server_admin_username": "wYkNKTGi",
+                "aerospike-amc": {
+                    "listen_port": 8080,
+                    "memory": {
+                        "max_heap": 1024,
+                        "min_heap": 1024
+                    },
+                    "password": "admin",
+                    "username": "admin"
+                },
+                "network": "service",
+                "password": "Gz",
+                "username": "cMJ7x08iFz"
+            }
+        }],
+        "vm_type": "small",
+        "stemcell": "only-stemcell",
+        "azs": ["tenant-RP1"],
+        "networks": [{
+            "name": "service"
+        }]
+    }],
+    "update": {
+        "canaries": 1,
+        "canary_watch_time": "30000-240000",
+        "update_watch_time": "30000-240000",
+        "max_in_flight": 10,
+        "serial": false
+    },
+    "properties": {
+        "cf": {
+            "admin_password": "asdfasf",
+            "admin_username": "system_services",
+            "api_url": "https://api.pez.pivotal.io",
+            "app_domains": ["cfapps.pez.pivotal.io"],
+            "disable_ssl_cert_verification": true,
+            "domain": "pez.pivotal.io",
+            "nats": {
+                "host": "10.65.11.13",
+                "password": "S_Hadsas",
+                "port": 4222,
+                "username": "nats"
+            }
+        },
+        "aerospike-server": {
+            "listen_port": 8080,
+            "memory": {
+                "max_heap": 1024,
+                "min_heap": 1024
+            },
+            "password": "admin",
+            "username": "admin"
+        },
+        "aerospike-amc": {
+            "listen_port": 8080,
+            "memory": {
+                "max_heap": 1024,
+                "min_heap": 1024
+            },
+            "password": "admin",
+            "username": "admin"
+        }
+    }
+}

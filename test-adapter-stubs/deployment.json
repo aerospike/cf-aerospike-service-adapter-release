@@ -1,0 +1,15 @@
+{
+    "deployment_name": "service-instance_$GUID",
+    "releases": [{
+        "name": "aerospike-release",
+        "version": "dev.42",
+        "jobs": [
+            "aerospike-server",
+            "aerospike-amc"
+        ]
+    }],
+    "stemcell": {
+        "stemcell_os": "BeOS",
+        "stemcell_version": "2"
+    }
+}

@@ -1,0 +1,105 @@
+name: service-instance_$GUID
+releases:
+- name: aerospike-service-release
+  version: 0.0.13
+stemcells:
+- alias: only-stemcell
+  os: ubuntu-trusty
+  version: "3232.17"
+instance_groups:
+- name: Aerospike-Server
+  instances: 1
+  jobs:
+  - name: aerospike-server
+    release: aerospike-service-release
+    properties:
+      cf:
+        admin_password: SHojk-oFtuoERVbOyy9lKLiO9ETRmpwN
+        admin_username: system_services
+        api_url: https://api.run-02.haas-26.pez.pivotal.io
+        app_domains:
+        - cfapps-02.haas-26.pez.pivotal.io
+        disable_ssl_cert_verification: true
+        domain: run-02.haas-26.pez.pivotal.io
+        nats:
+          host: 10.65.179.13
+          password: dO0UWgwmyBjsjWP_ppeIryl4Y83dxfp6
+          port: 4222
+          username: nats
+      namespace_data_in_memory: false
+      namespace_default_ttl: 0S
+      namespace_filesize: 1G
+      namespace_name: cf_persistent
+      namespace_replication_factor: 2
+      namespace_storage_type: "device"
+      namespace_size: 1G
+      network: service
+      service:
+        amc_password: XQZBhai4xXCFD9FNZa1f
+        amc_user: wSQufzMNJebs
+        db_password: HMIZgM5dsXBOrDpDPkd6
+        db_user: admin
+        license_type: enterprise
+      service_network:
+        fabric_port: 3001
+        heartbeat_interval: 150
+        heartbeat_port: 3002
+        heartbeat_timeout: 10
+        info_port: 3003
+        service_port: 3000
+      type: medium
+  vm_type: medium
+  stemcell: only-stemcell
+  persistent_disk_type: ten
+  azs:
+  - tenant08-slot02-RP1
+  networks:
+  - name: service
+- name: Aerospike-AMC
+  instances: 1
+  jobs:
+  - name: aerospike-amc
+    release: aerospike-service-release
+    properties:
+      amc_address: aerospike-amc-edc8671f-dd4b-4177-9525-e0a7bc4111bb
+      amc_listen_port: 8081
+      cf:
+        admin_password: SHojk-oFtuoERVbOyy9lKLiO9ETRmpwN
+        admin_username: system_services
+        api_url: https://api.run-02.haas-26.pez.pivotal.io
+        app_domains:
+        - cfapps-02.haas-26.pez.pivotal.io
+        disable_ssl_cert_verification: true
+        domain: run-02.haas-26.pez.pivotal.io
+        nats:
+          host: 10.65.179.13
+          password: dO0UWgwmyBjsjWP_ppeIryl4Y83dxfp6
+          port: 4222
+          username: nats
+      namespace_data_in_memory: false
+      namespace_default_ttl: 0S
+      namespace_filesize: 1G
+      namespace_name: cf_persistent
+      namespace_replication_factor: "2"
+      namespace_storage_type: "device"
+      namespace_size: 1G
+      network: service
+      service:
+        amc_password: XQZBhai4xXCFD9FNZa1f
+        amc_user: wSQufzMNJebs
+        db_password: HMIZgM5dsXBOrDpDPkd6
+        db_user: admin
+        license_type: enterprise
+      type: medium
+  vm_type: medium
+  stemcell: only-stemcell
+  azs:
+  - tenant08-slot02-RP1
+  networks:
+  - name: service
+update:
+  canaries: 1
+  canary_watch_time: 30000-300000
+  update_watch_time: 30000-300000
+  max_in_flight: 1
+  serial: true

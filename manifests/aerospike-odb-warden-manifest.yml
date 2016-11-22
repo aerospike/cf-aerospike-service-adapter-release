@@ -1,0 +1,273 @@
+---
+name: aerospike-on-demand-broker
+
+director_uuid: <%= `bosh target > /dev/null 2>&1 && bosh status --uuid` %>
+
+cf: &cf-config
+  url: https://api.local2.pcfdev.io
+  root_ca_cert: #<root ca cert for CF> # optional
+  authentication:
+    url: https://uaa.local2.pcfdev.io
+    user_credentials: # can use client_credentials instead
+      username: user
+      password: pass
+    client_credentials: # can use client_credentials instead
+      client_id:
+      secret:
+
+bosh: &bosh-config
+  url: https://192.168.50.4:25555
+  root_ca_cert: #<root ca cert for CF> # optional
+  authentication:
+    basic: # can use uaa instead
+      username: admin
+      password: admin
+    uaa: # or go with basic auth
+      url:
+      client_id:
+      client_secret:
+
+cf_properties: &cf-properties
+  apps_domain: local2.pcfdev.io
+  nats:
+    #host: 10.244.0.6
+    host: 10.0.2.15
+    port: 4222
+    username: nats
+    password: nats
+
+releases:
+  - name: &odb-broker-release on-demand-service-broker
+    version: 0.12
+  - name: &service-adapter-release aerospike-service-adapter-release
+    version: latest
+  - name: aerospike-service-release
+    version: 0.1
+
+stemcells:
+  - alias: trusty
+    os: ubuntu-trusty
+    version: latest
+
+instance_groups:
+  - name: broker
+    instances: 1
+    jobs:
+      - name: broker
+        release: *odb-broker-release
+        properties:
+          port: &broker_port 8080
+          username: testuser
+          password: testuser
+          disable_ssl_cert_verification: true
+          cf: *cf-config
+          bosh: *bosh-config
+          service_adapter:
+            path: /var/vcap/packages/odb-service-adapter/bin/service-adapter
+          service_deployment:
+            releases:
+              - name: aerospike-service-release
+                version: 0.1
+                jobs: ['aerospike-server', 'aerospike-amc']
+            stemcell:
+              os: ubuntu-trusty
+              version: latest
+          service_catalog:
+            id: aerospike-service-on-demand
+            service_name: aerospike-on-demand
+            service_description: Aerospike NoSQL Speed@Scale
+            bindable: true
+            plan_updatable: true
+            tags: [aerospike]
+            plans:
+              - name: small
+                plan_id: small-plan-guid
+                description: test small
+                instance_groups:
+                - name: Aerospike-Server
+                  vm_type: medium
+                  instances: 1
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                - name: Aerospike-AMC
+                  vm_type: medium
+                  instances: 1
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  
+              - name: medium
+                plan_id: medium-plan-guid
+                description: test medium
+                instance_groups:
+                - name: Aerospike-Server
+                  vm_type: medium
+                  instances: 5
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                - name: Aerospike-AMC
+                  vm_type: medium
+                  instances: 2
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  
+              - name: large
+                plan_id: large-plan-guid
+                description: test large
+                instance_groups:
+                - name: Aerospike-Server
+                  vm_type: medium
+                  instances: 10
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                - name: Aerospike-AMC
+                  vm_type: medium
+                  instances: 2
+                  azs: [ "z1" ]
+                  persistent_disk: *small-disk
+                  networks: ["service"]
+                properties:
+                  cf: *cf-properties
+                  jobType1:
+                    listen_port: 8080
+                    address: jobType1-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  jobType2:
+                    listen_port: 8080
+                    address: jobType2-small
+                    username: admin
+                    password: admin
+                    memory:
+                      max_heap: 1024
+                      min_heap: 1024
+                  
+      - name: aerospike-service-adapter
+        release: *service-adapter-release
+
+    vm_type: medium
+    stemcell: trusty
+    azs: [ "z1" ]
+    networks:
+      - name: service
+
+  - name: register-broker
+    lifecycle: errand
+    instances: 1
+    jobs:
+      - name: register-broker
+        release: *odb-broker-release
+        properties:
+          broker_name: aerospike
+          disable_ssl_cert_verification: true
+          cf: &cf
+            api_url: https://api.local2.pcfdev.io
+            admin_username: admin
+            admin_password: admin
+    vm_type: medium
+    stemcell: trusty
+    networks: [{name: service}]
+    azs: [ "z1" ]
+
+update:
+  canaries: 1
+  canary_watch_time: 3000-180000
+  update_watch_time: 3000-180000
+  max_in_flight: 4

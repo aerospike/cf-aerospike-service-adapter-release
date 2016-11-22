@@ -1,0 +1,163 @@
+{
+  "name": "service-instance_$GUID",
+  "releases": [
+    {
+      "name": "aerospike-release",
+      "version": "dev.42"
+    }
+  ],
+  "stemcells": [
+    {
+      "alias": "only-stemcell",
+      "os": "BeOS",
+      "version": "2"
+    }
+  ],
+  "instance_groups": [
+    {
+      "name": "Aerospike-Server",
+      "instances": 1,
+      "jobs": [
+        {
+          "name": "aerospike-server",
+          "release": "aerospike-release",
+          "properties": {
+            "cf": {
+              "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
+              "admin_username": "system_services",
+              "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
+              "app_domains": [
+                "cfapps-03.haas-26.pez.pivotal.io"
+              ],
+              "authentication": {
+                "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
+                "user_credentials": {
+                  "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
+                  "username": "system_services"
+                }
+              },
+              "disable_ssl_cert_verification": true,
+              "domain": "run-03.haas-26.pez.pivotal.io",
+              "nats": {
+                "host": "10.65.180.13",
+                "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR",
+                "port": 4222,
+                "username": "nats"
+              },
+              "url": "https://api.run-03.haas-26.pez.pivotal.io"
+            },
+            "example": "property",
+            "namespace_data_in_memory": "false",
+            "namespace_default_ttl": "0S",
+            "namespace_filesize": "4G",
+            "namespace_name": "cf_session",
+            "namespace_replication_factor": "3",
+            "namespace_size": "2G",
+            "namespace_storage_type": "memory",
+            "network": "example-network",
+            "service": {
+              "amc_password": "mJh7fYI5a8xpd8tlmLan",
+              "amc_user": "xJMg5dME1BMK",
+              "db_password": "HMIZgM5dsXBOrDpDPkd6",
+              "db_user": "admin",
+              "license_type": "enterprise"
+            },
+            "service_network": {
+              "fabric_port": 3001,
+              "heartbeat_interval": 150,
+              "heartbeat_port": 3002,
+              "heartbeat_timeout": 10,
+              "info_port": 3003,
+              "service_port": 3000
+            },
+            "type": "small"
+          }
+        }
+      ],
+      "vm_type": "small",
+      "stemcell": "only-stemcell",
+      "persistent_disk_type": "ten",
+      "azs": [
+        "example-az"
+      ],
+      "networks": [
+        {
+          "name": "example-network"
+        }
+      ]
+    },
+    {
+      "name": "Aerospike-AMC",
+      "instances": 1,
+      "jobs": [
+        {
+          "name": "aerospike-amc",
+          "release": "aerospike-release",
+          "properties": {
+            "amc_address": "aerospike-amc-$GUID",
+            "amc_listen_port": 8081,
+            "cf": {
+              "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
+              "admin_username": "system_services",
+              "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
+              "app_domains": [
+                "cfapps-03.haas-26.pez.pivotal.io"
+              ],
+              "authentication": {
+                "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
+                "user_credentials": {
+                  "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
+                  "username": "system_services"
+                }
+              },
+              "disable_ssl_cert_verification": true,
+              "domain": "run-03.haas-26.pez.pivotal.io",
+              "nats": {
+                "host": "10.65.180.13",
+                "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR",
+                "port": 4222,
+                "username": "nats"
+              },
+              "url": "https://api.run-03.haas-26.pez.pivotal.io"
+            },
+            "example": "property",
+            "namespace_data_in_memory": "false",
+            "namespace_default_ttl": "0S",
+            "namespace_filesize": "4G",
+            "namespace_name": "cf_session",
+            "namespace_replication_factor": "3",
+            "namespace_size": "2G",
+            "namespace_storage_type": "memory",
+            "network": "example-network",
+            "service": {
+              "amc_password": "mJh7fYI5a8xpd8tlmLan",
+              "amc_user": "xJMg5dME1BMK",
+              "db_password": "HMIZgM5dsXBOrDpDPkd6",
+              "db_user": "admin",
+              "license_type": "enterprise"
+            },
+            "type": "small"
+          }
+        }
+      ],
+      "vm_type": "small",
+      "stemcell": "only-stemcell",
+      "persistent_disk_type": "ten",
+      "azs": [
+        "example-az"
+      ],
+      "networks": [
+        {
+          "name": "example-network"
+        }
+      ]
+    }
+  ],
+  "update": {
+    "canaries": 1,
+    "canary_watch_time": "1000-30000",
+    "update_watch_time": "1000-30000",
+    "max_in_flight": 2,
+    "serial": true
+  }
+}

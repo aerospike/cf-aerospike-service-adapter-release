@@ -1,0 +1,70 @@
+{
+   "instance_groups": [
+      {
+         "name": "Aerospike-Server",
+         "vm_type": "small",
+         "persistent_disk_type": "ten",
+         "networks": [
+            "example-network"
+         ],
+         "azs": [
+            "example-az"
+         ],
+         "instances": 1
+      },
+      {
+         "name": "Aerospike-AMC",
+         "vm_type": "small",
+         "persistent_disk_type": "ten",
+         "networks": [
+            "example-network"
+         ],
+         "azs": [
+            "example-az"
+         ],
+         "instances": 1
+      }
+   ],
+   "properties": {
+      "example": "property",
+      "namespace_name": "cf_session",
+      "namespace_storage_type": "memory",
+      "namespace_size": "2G",
+      "namespace_filesize": "4G",
+      "namespace_replication_factor": "1",
+      "namespace_default_ttl": "0S",
+      "namespace_data_in_memory": "false",
+      "type": "small",
+      "cf": {
+        "disable_ssl_cert_verification": true,
+        "domain": "run-03.haas-26.pez.pivotal.io",
+        "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
+        "app_domains": [
+          "cfapps-03.haas-26.pez.pivotal.io"
+        ],
+        "admin_username": "system_services",
+        "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
+        "nats": {
+          "host": "10.65.180.13",
+          "port": 4222,
+          "username": "nats",
+          "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR"
+        },
+        "url": "https://api.run-03.haas-26.pez.pivotal.io",
+        "authentication": {
+          "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
+          "user_credentials": {
+            "username": "system_services",
+            "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC"
+          }
+        }
+      }
+   },
+   "update": {
+      "canaries": 1,
+      "max_in_flight": 2,
+      "canary_watch_time": "1000-300000",
+      "update_watch_time": "1000-300000",
+      "serial": true
+  }
+}

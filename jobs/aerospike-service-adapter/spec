@@ -1,0 +1,8 @@
+---
+name: aerospike-service-adapter
+
+packages: [odb-service-adapter]
+
+templates: {}
+
+properties: {}

@@ -1,0 +1,10 @@
+{
+  "parameters" : {
+    "server_route": "test-aerospike-server-route",
+    "amc_route": "test-aerospike-amc-route",
+    "server_instances": 5,
+    "namespace_name": "cf_persistent",
+    "namespace_storage_type": "device",
+    "namespace_size": "2G"
+    }
+}
