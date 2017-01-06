@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
-//	"gopkg.in/yaml.v2"
+	"net/http"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
@@ -55,6 +55,11 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
+
+	ok := validateLicense(servicePlan.Properties["license_user"], servicePlan.Properties["license_password"]);
+	if !ok {
+		return bosh.BoshManifest{}, errors.New("Invalid Aerospike EE license. Please correct the User and Password on the Aerospike EE OnDemand Tile")
+	}
 
 	copyOriginalManifestProperties(&servicePlan, previousManifest)
     aerospike_server_admin_username := "admin"
@@ -441,4 +446,30 @@ func containsInstanceGroup(name string, instanceGroups []serviceadapter.Instance
 	}
 
 	return false
+}
+
+func validateLicense(user string, password string) bool {
+	var valid = true
+
+	req, err := http.NewRequest("HEAD", "http://www.aerospike.com/enterprise/download/server/latest", nil)
+	if err != nil {
+		return false
+	}
+
+	cli := &http.Client{
+	    CheckRedirect: func(req *http.Request, via []*http.Request) error {
+	        if len(via) >= 10 {
+	            return errors.New("stopped after 10 redirects")
+	        }
+	        req.SetBasicAuth(user, password)
+	        return nil
+	    }}
+	resp, err := cli.Do(req)
+
+	if err != nil || resp.StatusCode > 300 {
+		valid = false
+	}
+	defer resp.Body.Close()
+	
+	return valid
 }
