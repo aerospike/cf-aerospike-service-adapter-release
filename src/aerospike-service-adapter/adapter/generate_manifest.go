@@ -56,7 +56,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
 
-	ok := validateLicense(servicePlan.Properties["license_user"], servicePlan.Properties["license_password"]);
+	ok := validateLicense(servicePlan.Properties["license_user"].(string), servicePlan.Properties["license_password"].(string));
 	if !ok {
 		return bosh.BoshManifest{}, errors.New("Invalid Aerospike EE license. Please correct the User and Password on the Aerospike EE OnDemand Tile")
 	}
