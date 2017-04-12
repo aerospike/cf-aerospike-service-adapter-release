@@ -19,6 +19,9 @@ var servicePlanParams = []string {
 	"namespace_data_in_memory", "namespace_default_ttl", "namespace_filesize", "namespace_name", 
 	"namespace_replication_factor", "namespace_size", "namespace_storage_type"}
 
+var booleanParams = []string {
+	"namespace_data_in_memory"}
+
 var otherParams = []string {
 	"server_route", "amc_route", "server_instances", "server_vm_type", "server_persistent_disk_type"}
 
@@ -285,6 +288,20 @@ func updateServicePlanProperty(servicePlan *serviceadapter.Plan, arbitraryParame
 		plan_param = orig_param
 	}
 	servicePlan.Properties[ns_param] = plan_param
+
+	if contains(booleanParams, ns_param) {
+		if strVal, ok := plan_param.(string); ok {
+			boolValue, err := strconv.ParseBool(strVal)
+			if err != nil {
+				return fmt.Sprintf("Cannot interpret %s as a boolean value", strVal), false
+			}
+			servicePlan.Properties[ns_param] = boolValue
+		} else if boolVal, ok := plan_param.(bool); ok {
+			servicePlan.Properties[ns_param] = boolVal
+		} else {
+			return fmt.Sprintf("Invalid value %s for boolean parameter %s", plan_param, ns_param), false
+		}
+	}
 
 	return "", true
 }
