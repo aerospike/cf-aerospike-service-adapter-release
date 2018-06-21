@@ -30,10 +30,13 @@ fi
 
 PRODUCT_NAME=aerospike-service-adapter
 RELEASE_NAME=aerospike-service-adapter-release
+RELEASE_TAR_NAME="$RELEASE_NAME-$SERVICE_ADAPTER_RELEASE_VERSION.tgz"
 
 cd $RELEASE_DIR
 
 # Uncomment if the jobs have to be generated each time
 rm -rf .dev_releases *releases .*builds  ~/.bosh/cache
-bosh -n create release --name $RELEASE_NAME \
-     --version $SERVICE_ADAPTER_RELEASE_VERSION --force --with-tarball
+bosh -n create-release --name $RELEASE_NAME --version $SERVICE_ADAPTER_RELEASE_VERSION --tarball $RELEASE_TAR_NAME --force
+cp $RELEASE_TAR_NAME dev_releases/$RELEASE_NAME/
+# bosh -n create release --name $RELEASE_NAME \
+#      --version $SERVICE_ADAPTER_RELEASE_VERSION --force --with-tarball

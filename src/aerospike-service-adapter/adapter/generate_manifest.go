@@ -8,7 +8,6 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
-	"net/http"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
@@ -58,11 +57,6 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
-
-	ok := validateLicense(servicePlan.Properties["license_user"].(string), servicePlan.Properties["license_password"].(string));
-	if !ok {
-		return bosh.BoshManifest{}, errors.New("Invalid Aerospike EE license. Please correct the User and Password on the Aerospike EE OnDemand Tile")
-	}
 
 	copyOriginalManifestProperties(&servicePlan, previousManifest)
     aerospike_server_admin_username := "admin"
@@ -126,6 +120,14 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		"db_user": aerospike_server_admin_username,
 		"db_password": aerospike_server_admin_password,
 		"license_type": aerospike_server_license_type,
+	}
+
+	amc_service_map := map[string]interface{}{
+		"db_user": aerospike_server_admin_username,
+		"db_password": aerospike_server_admin_password,
+		"license_type": aerospike_server_license_type,
+		"amc_user": aerospike_server_admin_username,
+		"amc_password": aerospike_server_admin_password,
 	}
 
 	service_network_map := map[string]interface{}{
@@ -220,7 +222,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 
 	aerospike_amcJob.Properties = map[string]interface{}{
 		"network": aerospike_amcInstanceGroup.Networks[0].Name,
-		"service": service_map,
+		"service": amc_service_map,
 		"amc_listen_port": 8081,
 		"amc_address": aerospike_amcRoute,
 	}
@@ -260,7 +262,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 			}},
 		InstanceGroups: instanceGroups,
 		Properties:     manifestProperties,
-		Update:         updateBlock,
+		Update:         &updateBlock,
 	}
 
 	return generatedManifest, nil
@@ -463,30 +465,4 @@ func containsInstanceGroup(name string, instanceGroups []serviceadapter.Instance
 	}
 
 	return false
-}
-
-func validateLicense(user string, password string) bool {
-	var valid = true
-
-	req, err := http.NewRequest("HEAD", "http://www.aerospike.com/enterprise/download/server/latest", nil)
-	if err != nil {
-		return false
-	}
-
-	cli := &http.Client{
-	    CheckRedirect: func(req *http.Request, via []*http.Request) error {
-	        if len(via) >= 10 {
-	            return errors.New("stopped after 10 redirects")
-	        }
-	        req.SetBasicAuth(user, password)
-	        return nil
-	    }}
-	resp, err := cli.Do(req)
-
-	if err != nil || resp.StatusCode > 300 {
-		valid = false
-	}
-	defer resp.Body.Close()
-	
-	return valid
 }
