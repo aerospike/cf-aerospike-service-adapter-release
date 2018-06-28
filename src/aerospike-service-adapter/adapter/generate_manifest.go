@@ -58,6 +58,8 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
 
+	featureKey := servicePlan.Properties["feature_key"].(string)
+
 	copyOriginalManifestProperties(&servicePlan, previousManifest)
     aerospike_server_admin_username := "admin"
 	aerospike_server_admin_password := RandStringRunes(20)
@@ -120,6 +122,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		"db_user": aerospike_server_admin_username,
 		"db_password": aerospike_server_admin_password,
 		"license_type": aerospike_server_license_type,
+		"feature_key": featureKey,
 	}
 
 	amc_service_map := map[string]interface{}{

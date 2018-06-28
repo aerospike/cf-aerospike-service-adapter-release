@@ -35,6 +35,7 @@
       "namespace_default_ttl": "0S",
       "namespace_data_in_memory": "false",
       "type": "small",
+      "feature_key": "my\nfeature\nkey\nsignature***",
       "cf": {
         "disable_ssl_cert_verification": true,
         "domain": "run-03.haas-26.pez.pivotal.io",
