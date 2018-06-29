@@ -26,6 +26,7 @@
       }
    ],
    "properties": {
+      "nats_deployment": "cf_deployment_name",
       "example": "property",
       "namespace_name": "cf_session",
       "namespace_storage_type": "memory",

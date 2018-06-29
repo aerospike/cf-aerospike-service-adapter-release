@@ -7,6 +7,13 @@
             "aerospike-server",
             "aerospike-amc"
         ]
+    },
+    {
+        "name": "routing-release",
+        "version": "dev.42",
+        "jobs": [
+            "route-registrar"
+        ]
     }],
     "stemcell": {
         "stemcell_os": "BeOS",

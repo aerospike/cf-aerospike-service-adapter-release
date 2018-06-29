@@ -13,6 +13,8 @@ import (
 )
 
 const OnlyStemcellAlias = "only-stemcell"
+const AMCJobName = "aerospike-amc"
+const RouteRegistrarJobName = "route-registrar"
 
 var servicePlanParams = []string {
 	"namespace_data_in_memory", "namespace_default_ttl", "namespace_filesize", "namespace_name", 
@@ -47,7 +49,7 @@ func RandStringRunes(n int) string {
 func defaultDeploymentInstanceGroupsToJobs() map[string][]string {
 	return map[string][]string{
 		"Aerospike-Server":  []string{ "aerospike-server"	},
-		"Aerospike-AMC":     []string{ "aerospike-amc"	},
+		"Aerospike-AMC":     []string{ "aerospike-amc", "route-registrar"},
 	}
 }
 
@@ -59,6 +61,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 ) (bosh.BoshManifest, error) {
 
 	featureKey := servicePlan.Properties["feature_key"].(string)
+	natsDeploymentName := servicePlan.Properties["nats_deployment"].(string)
 
 	copyOriginalManifestProperties(&servicePlan, previousManifest)
     aerospike_server_admin_username := "admin"
@@ -221,7 +224,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		return bosh.BoshManifest{}, errors.New("")
 	}
 
-	aerospike_amcJob := &aerospike_amcInstanceGroup.Jobs[0]
+	aerospike_amcJob, _ :=  getJobFromInstanceGroup(AMCJobName, aerospike_amcInstanceGroup)
 
 	aerospike_amcJob.Properties = map[string]interface{}{
 		"network": aerospike_amcInstanceGroup.Networks[0].Name,
@@ -232,6 +235,17 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	for key, val := range servicePlan.Properties {
 		aerospike_amcJob.Properties[key] = val
 	}
+
+	a.StderrLogger.Printf("AMC Instance Group: %+v\n\n\n", aerospike_amcInstanceGroup)
+	route_registrarJob,  registrarFound := getJobFromInstanceGroup(RouteRegistrarJobName, aerospike_amcInstanceGroup)
+	if registrarFound {
+		a.StderrLogger.Printf("RouteRegistrar job: %+v\n\n\n", route_registrarJob)
+		addConsumesNatsToJob(route_registrarJob, natsDeploymentName)
+		route_registrarJob.Properties = buildHostsManifestPortion("myCoolAmcRoute", "aerospike.com", 8081)
+		a.StderrLogger.Printf("RouteRegistrar job: %+v\n\n\n", route_registrarJob)
+
+	}
+	buildHostsManifestPortion("myCoolAmcRoute", "aerospike.com", 8081)
 
 	manifestProperties := map[string]interface{}{
 
@@ -468,4 +482,67 @@ func containsInstanceGroup(name string, instanceGroups []serviceadapter.Instance
 	}
 
 	return false
+}
+
+// func getAppsDomain(job *bosh.Job) {
+
+// 	cfMap := job.Properties["cf"]
+
+// 	if rec, ok := cfMap.(map[interface{}]interface{}); ok {
+// 		for key, val := range rec {
+// 			keyStr := key.(string)
+// 			if keyStr == "app_domains" {
+// 				if (reflect.TypeOf(val).Kind() == reflect.String) {
+// 					cfDomainRoute = val.(string)
+// 				} else if (reflect.TypeOf(val).Kind() == reflect.Slice) {
+// 					if rec, ok := val.([]interface{}); ok {
+// 						cfDomainRoute = rec[0].(string)
+// 					}	
+// 				}
+// 				break
+// 			}
+// 		}
+// 	}
+// 	return cfMap
+// }
+
+func addConsumesNatsToJob(job *bosh.Job, deploymentName string) {
+	*job = job.AddCrossDeploymentConsumesLink("nats", "nats", deploymentName)
+	new_job := job
+	fmt.Printf("ADDED TO  job: %+v\n\n\n", new_job)
+	fmt.Printf("ADDED TO  job: %+v\n\n\n", job)
+}
+
+func buildHostsManifestPortion(amcRoute string, appsDomain string, amcPort int) map[string]interface{}{
+//		"amc_listen_port": 8081,
+// "amc_address": aerospike_amcRoute,
+//	route_registrar.routes:
+	// - name: my-service
+	// registration_interval: 20s
+	// port: 12345
+	// tags:
+	//   component: my-service
+	//   env: production
+	// uris:
+	//   - my-service.system-domain.com
+	//   - *.my-service.system-domain.com
+	// health_check:
+	//   name: my-service-health_check
+	//   script_path: /path/to/script
+	//   timeout: 5s
+	amc_address := fmt.Sprintf("%s.%s", amcRoute, appsDomain)
+	routes_info := map[string]interface{}{
+		"name": amcRoute,
+		"registration_interval": "20s",
+		"port": amcPort,
+		"uris": []string{amc_address},
+	}
+
+	route_registrar_info := map[string]interface{}{
+		"route_registrar": map[string]interface{}{
+			"routes": []map[string]interface{}{routes_info},
+		},
+	}
+	fmt.Printf("The routeinformation is: %v\n\n\n", routes_info)
+	return route_registrar_info
 }
