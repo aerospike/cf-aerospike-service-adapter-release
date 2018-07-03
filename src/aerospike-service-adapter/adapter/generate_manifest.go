@@ -8,13 +8,14 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
+	"reflect"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
 
 const OnlyStemcellAlias = "only-stemcell"
 const AMCJobName = "aerospike-amc"
-const RouteRegistrarJobName = "route-registrar"
+const RouteRegistrarJobName = "route_registrar"
 
 var servicePlanParams = []string {
 	"namespace_data_in_memory", "namespace_default_ttl", "namespace_filesize", "namespace_name", 
@@ -49,7 +50,7 @@ func RandStringRunes(n int) string {
 func defaultDeploymentInstanceGroupsToJobs() map[string][]string {
 	return map[string][]string{
 		"Aerospike-Server":  []string{ "aerospike-server"	},
-		"Aerospike-AMC":     []string{ "aerospike-amc", "route-registrar"},
+		"Aerospike-AMC":     []string{ "aerospike-amc", RouteRegistrarJobName},
 	}
 }
 
@@ -239,10 +240,9 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	a.StderrLogger.Printf("AMC Instance Group: %+v\n\n\n", aerospike_amcInstanceGroup)
 	route_registrarJob,  registrarFound := getJobFromInstanceGroup(RouteRegistrarJobName, aerospike_amcInstanceGroup)
 	if registrarFound {
-		a.StderrLogger.Printf("RouteRegistrar job: %+v\n\n\n", route_registrarJob)
 		addConsumesNatsToJob(route_registrarJob, natsDeploymentName)
-		route_registrarJob.Properties = buildHostsManifestPortion("myCoolAmcRoute", "aerospike.com", 8081)
-		a.StderrLogger.Printf("RouteRegistrar job: %+v\n\n\n", route_registrarJob)
+		appsDomain := getAppsDomainFromPlan(servicePlan)
+		route_registrarJob.Properties = buildHostsManifestPortion(aerospike_amcRoute.(string), appsDomain, 8081)
 
 	}
 	buildHostsManifestPortion("myCoolAmcRoute", "aerospike.com", 8081)
@@ -484,33 +484,28 @@ func containsInstanceGroup(name string, instanceGroups []serviceadapter.Instance
 	return false
 }
 
-// func getAppsDomain(job *bosh.Job) {
+func getAppsDomainFromPlan(servicePlan serviceadapter.Plan) string {
 
-// 	cfMap := job.Properties["cf"]
-
-// 	if rec, ok := cfMap.(map[interface{}]interface{}); ok {
-// 		for key, val := range rec {
-// 			keyStr := key.(string)
-// 			if keyStr == "app_domains" {
-// 				if (reflect.TypeOf(val).Kind() == reflect.String) {
-// 					cfDomainRoute = val.(string)
-// 				} else if (reflect.TypeOf(val).Kind() == reflect.Slice) {
-// 					if rec, ok := val.([]interface{}); ok {
-// 						cfDomainRoute = rec[0].(string)
-// 					}	
-// 				}
-// 				break
-// 			}
-// 		}
-// 	}
-// 	return cfMap
-// }
+	cfMap := servicePlan.Properties["cf"]
+	cfDomainRoute := ""
+	if rec, ok := cfMap.(map[string]interface{}); ok {
+		fmt.Printf("It was what we thought it was")
+		val, found := rec["app_domains"]
+		if found {
+			if (reflect.TypeOf(val).Kind() == reflect.String) {
+				cfDomainRoute = val.(string)
+			} else if (reflect.TypeOf(val).Kind() == reflect.Slice) {
+				if rec, ok := val.([]interface{}); ok {
+					cfDomainRoute = rec[0].(string)
+				}	
+			}
+		}
+	}
+	return cfDomainRoute
+}
 
 func addConsumesNatsToJob(job *bosh.Job, deploymentName string) {
 	*job = job.AddCrossDeploymentConsumesLink("nats", "nats", deploymentName)
-	new_job := job
-	fmt.Printf("ADDED TO  job: %+v\n\n\n", new_job)
-	fmt.Printf("ADDED TO  job: %+v\n\n\n", job)
 }
 
 func buildHostsManifestPortion(amcRoute string, appsDomain string, amcPort int) map[string]interface{}{
@@ -543,6 +538,5 @@ func buildHostsManifestPortion(amcRoute string, appsDomain string, amcPort int) 
 			"routes": []map[string]interface{}{routes_info},
 		},
 	}
-	fmt.Printf("The routeinformation is: %v\n\n\n", routes_info)
 	return route_registrar_info
 }

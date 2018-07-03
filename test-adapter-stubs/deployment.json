@@ -12,7 +12,7 @@
         "name": "routing-release",
         "version": "dev.42",
         "jobs": [
-            "route-registrar"
+            "route_registrar"
         ]
     }],
     "stemcell": {

@@ -23,28 +23,9 @@
           "release": "aerospike-release",
           "properties": {
             "cf": {
-              "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
-              "admin_username": "system_services",
-              "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
               "app_domains": [
                 "cfapps-03.haas-26.pez.pivotal.io"
-              ],
-              "authentication": {
-                "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
-                "user_credentials": {
-                  "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
-                  "username": "system_services"
-                }
-              },
-              "disable_ssl_cert_verification": true,
-              "domain": "run-03.haas-26.pez.pivotal.io",
-              "nats": {
-                "host": "10.65.180.13",
-                "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR",
-                "port": 4222,
-                "username": "nats"
-              },
-              "url": "https://api.run-03.haas-26.pez.pivotal.io"
+              ]
             },
             "example": "property",
             "namespace_data_in_memory": "false",
@@ -97,28 +78,9 @@
             "amc_address": "aerospike-amc-$GUID",
             "amc_listen_port": 8081,
             "cf": {
-              "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
-              "admin_username": "system_services",
-              "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
               "app_domains": [
                 "cfapps-03.haas-26.pez.pivotal.io"
-              ],
-              "authentication": {
-                "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
-                "user_credentials": {
-                  "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
-                  "username": "system_services"
-                }
-              },
-              "disable_ssl_cert_verification": true,
-              "domain": "run-03.haas-26.pez.pivotal.io",
-              "nats": {
-                "host": "10.65.180.13",
-                "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR",
-                "port": 4222,
-                "username": "nats"
-              },
-              "url": "https://api.run-03.haas-26.pez.pivotal.io"
+              ]
             },
             "example": "property",
             "namespace_data_in_memory": "false",
@@ -137,6 +99,28 @@
               "license_type": "enterprise"
             },
             "type": "small"
+          }
+        },
+        {
+          "name": "route_registrar",
+          "release": "routing",
+          "consumes": {
+            "nats": {
+              "from": "nats",
+              "deployment": "cf_deployment_name"
+            }
+          },
+          "properties": {
+            "route_registrar": {
+              "routes": {
+                "name": "aerospike-amc-$GUID",
+                "port": 8081,
+                "registration_interval": "20s",
+                "uris": [
+                  "aerospike-amc-$GUID.cfapps-03.haas-26.pez.pivotal.io"
+                ]
+              }
+            }
           }
         }
       ],
