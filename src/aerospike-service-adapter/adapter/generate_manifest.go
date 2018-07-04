@@ -237,7 +237,6 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		aerospike_amcJob.Properties[key] = val
 	}
 
-	a.StderrLogger.Printf("AMC Instance Group: %+v\n\n\n", aerospike_amcInstanceGroup)
 	route_registrarJob,  registrarFound := getJobFromInstanceGroup(RouteRegistrarJobName, aerospike_amcInstanceGroup)
 	if registrarFound {
 		addConsumesNatsToJob(route_registrarJob, natsDeploymentName)
@@ -245,7 +244,6 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		route_registrarJob.Properties = buildHostsManifestPortion(aerospike_amcRoute.(string), appsDomain, 8081)
 
 	}
-	buildHostsManifestPortion("myCoolAmcRoute", "aerospike.com", 8081)
 
 	manifestProperties := map[string]interface{}{
 
@@ -489,7 +487,6 @@ func getAppsDomainFromPlan(servicePlan serviceadapter.Plan) string {
 	cfMap := servicePlan.Properties["cf"]
 	cfDomainRoute := ""
 	if rec, ok := cfMap.(map[string]interface{}); ok {
-		fmt.Printf("It was what we thought it was")
 		val, found := rec["app_domains"]
 		if found {
 			if (reflect.TypeOf(val).Kind() == reflect.String) {
@@ -509,8 +506,7 @@ func addConsumesNatsToJob(job *bosh.Job, deploymentName string) {
 }
 
 func buildHostsManifestPortion(amcRoute string, appsDomain string, amcPort int) map[string]interface{}{
-//		"amc_listen_port": 8081,
-// "amc_address": aerospike_amcRoute,
+	// We want to build a structure looking like:
 //	route_registrar.routes:
 	// - name: my-service
 	// registration_interval: 20s
