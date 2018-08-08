@@ -8,12 +8,14 @@ import (
 	"math/rand"
 	"regexp"
 	"strconv"
-	"net/http"
+	"reflect"
 	"github.com/pivotal-cf/on-demand-services-sdk/bosh"
 	"github.com/pivotal-cf/on-demand-services-sdk/serviceadapter"
 )
 
 const OnlyStemcellAlias = "only-stemcell"
+const AMCJobName = "aerospike-amc"
+const RouteRegistrarJobName = "route_registrar"
 
 var servicePlanParams = []string {
 	"namespace_data_in_memory", "namespace_default_ttl", "namespace_filesize", "namespace_name", 
@@ -48,7 +50,7 @@ func RandStringRunes(n int) string {
 func defaultDeploymentInstanceGroupsToJobs() map[string][]string {
 	return map[string][]string{
 		"Aerospike-Server":  []string{ "aerospike-server"	},
-		"Aerospike-AMC":     []string{ "aerospike-amc"	},
+		"Aerospike-AMC":     []string{ "aerospike-amc", RouteRegistrarJobName},
 	}
 }
 
@@ -59,10 +61,8 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	previousPlan *serviceadapter.Plan,
 ) (bosh.BoshManifest, error) {
 
-	ok := validateLicense(servicePlan.Properties["license_user"].(string), servicePlan.Properties["license_password"].(string));
-	if !ok {
-		return bosh.BoshManifest{}, errors.New("Invalid Aerospike EE license. Please correct the User and Password on the Aerospike EE OnDemand Tile")
-	}
+	featureKey := servicePlan.Properties["feature_key"].(string)
+	natsDeploymentName := servicePlan.Properties["nats_deployment"].(string)
 
 	copyOriginalManifestProperties(&servicePlan, previousManifest)
     aerospike_server_admin_username := "admin"
@@ -126,6 +126,15 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		"db_user": aerospike_server_admin_username,
 		"db_password": aerospike_server_admin_password,
 		"license_type": aerospike_server_license_type,
+		"feature_key": featureKey,
+	}
+
+	amc_service_map := map[string]interface{}{
+		"db_user": aerospike_server_admin_username,
+		"db_password": aerospike_server_admin_password,
+		"license_type": aerospike_server_license_type,
+		"amc_user": aerospike_server_admin_username,
+		"amc_password": aerospike_server_admin_password,
 	}
 
 	service_network_map := map[string]interface{}{
@@ -216,16 +225,24 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		return bosh.BoshManifest{}, errors.New("")
 	}
 
-	aerospike_amcJob := &aerospike_amcInstanceGroup.Jobs[0]
+	aerospike_amcJob, _ :=  getJobFromInstanceGroup(AMCJobName, aerospike_amcInstanceGroup)
 
 	aerospike_amcJob.Properties = map[string]interface{}{
 		"network": aerospike_amcInstanceGroup.Networks[0].Name,
-		"service": service_map,
+		"service": amc_service_map,
 		"amc_listen_port": 8081,
 		"amc_address": aerospike_amcRoute,
 	}
 	for key, val := range servicePlan.Properties {
 		aerospike_amcJob.Properties[key] = val
+	}
+
+	route_registrarJob,  registrarFound := getJobFromInstanceGroup(RouteRegistrarJobName, aerospike_amcInstanceGroup)
+	if registrarFound {
+		addConsumesNatsToJob(route_registrarJob, natsDeploymentName)
+		appsDomain := getAppsDomainFromPlan(servicePlan)
+		route_registrarJob.Properties = buildHostsManifestPortion(aerospike_amcRoute.(string), appsDomain, 8081)
+
 	}
 
 	manifestProperties := map[string]interface{}{
@@ -260,7 +277,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 			}},
 		InstanceGroups: instanceGroups,
 		Properties:     manifestProperties,
-		Update:         updateBlock,
+		Update:         &updateBlock,
 	}
 
 	return generatedManifest, nil
@@ -465,28 +482,57 @@ func containsInstanceGroup(name string, instanceGroups []serviceadapter.Instance
 	return false
 }
 
-func validateLicense(user string, password string) bool {
-	var valid = true
+func getAppsDomainFromPlan(servicePlan serviceadapter.Plan) string {
 
-	req, err := http.NewRequest("HEAD", "http://www.aerospike.com/enterprise/download/server/latest", nil)
-	if err != nil {
-		return false
+	cfMap := servicePlan.Properties["cf"]
+	cfDomainRoute := ""
+	if rec, ok := cfMap.(map[string]interface{}); ok {
+		val, found := rec["app_domains"]
+		if found {
+			if (reflect.TypeOf(val).Kind() == reflect.String) {
+				cfDomainRoute = val.(string)
+			} else if (reflect.TypeOf(val).Kind() == reflect.Slice) {
+				if rec, ok := val.([]interface{}); ok {
+					cfDomainRoute = rec[0].(string)
+				}	
+			}
+		}
+	}
+	return cfDomainRoute
+}
+
+func addConsumesNatsToJob(job *bosh.Job, deploymentName string) {
+	*job = job.AddCrossDeploymentConsumesLink("nats", "nats", deploymentName)
+}
+
+func buildHostsManifestPortion(amcRoute string, appsDomain string, amcPort int) map[string]interface{}{
+	// We want to build a structure looking like:
+//	route_registrar.routes:
+	// - name: my-service
+	// registration_interval: 20s
+	// port: 12345
+	// tags:
+	//   component: my-service
+	//   env: production
+	// uris:
+	//   - my-service.system-domain.com
+	//   - *.my-service.system-domain.com
+	// health_check:
+	//   name: my-service-health_check
+	//   script_path: /path/to/script
+	//   timeout: 5s
+	amc_address := fmt.Sprintf("%s.%s", amcRoute, appsDomain)
+	routes_info := map[string]interface{}{
+		"name": amcRoute,
+		"registration_interval": "20s",
+		"port": amcPort,
+		"uris": []string{amc_address},
 	}
 
-	cli := &http.Client{
-	    CheckRedirect: func(req *http.Request, via []*http.Request) error {
-	        if len(via) >= 10 {
-	            return errors.New("stopped after 10 redirects")
-	        }
-	        req.SetBasicAuth(user, password)
-	        return nil
-	    }}
-	resp, err := cli.Do(req)
-
-	if err != nil || resp.StatusCode > 300 {
-		valid = false
+	route_registrar_info := map[string]interface{}{
+		"route_registrar": map[string]interface{}{
+			"routes": []map[string]interface{}{routes_info},
+		},
 	}
-	defer resp.Body.Close()
-	
-	return valid
+	return route_registrar_info
 }

@@ -6,4 +6,4 @@ config/dev.yml
 config/private.yml
 releases/
 dev_releases/
-pkg/
+/pkg/

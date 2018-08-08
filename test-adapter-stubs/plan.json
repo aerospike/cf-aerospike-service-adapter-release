@@ -26,6 +26,7 @@
       }
    ],
    "properties": {
+      "nats_deployment": "cf_deployment_name",
       "example": "property",
       "namespace_name": "cf_session",
       "namespace_storage_type": "memory",
@@ -35,29 +36,11 @@
       "namespace_default_ttl": "0S",
       "namespace_data_in_memory": "false",
       "type": "small",
+      "feature_key": "my\nfeature\nkey\nsignature***",
       "cf": {
-        "disable_ssl_cert_verification": true,
-        "domain": "run-03.haas-26.pez.pivotal.io",
-        "api_url": "https://api.run-03.haas-26.pez.pivotal.io",
         "app_domains": [
           "cfapps-03.haas-26.pez.pivotal.io"
-        ],
-        "admin_username": "system_services",
-        "admin_password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC",
-        "nats": {
-          "host": "10.65.180.13",
-          "port": 4222,
-          "username": "nats",
-          "password": "RBo_WwuCmwIXaxMkLEXKykqELWPO6avR"
-        },
-        "url": "https://api.run-03.haas-26.pez.pivotal.io",
-        "authentication": {
-          "url": "https://uaa.run-03.haas-26.pez.pivotal.io",
-          "user_credentials": {
-            "username": "system_services",
-            "password": "OcpAQfaTh-2YKcK3Fb8m4YKMAwnNrLSC"
-          }
-        }
+        ]
       }
    },
    "update": {

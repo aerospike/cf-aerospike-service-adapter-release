@@ -14,6 +14,9 @@ disk_types:
 - name: default
   disk_size: 10000
   cloud_properties: {}
+- name: ten
+  disk_size: 10000
+  cloud_properties: {}
 - name: 10K-disk
   disk_size: 100000
   cloud_properties: {}
