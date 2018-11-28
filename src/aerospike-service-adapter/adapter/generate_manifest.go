@@ -59,7 +59,8 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 	requestParams serviceadapter.RequestParameters,
 	previousManifest *bosh.BoshManifest,
 	previousPlan *serviceadapter.Plan,
-) (bosh.BoshManifest, error) {
+	previousSecrets serviceadapter.ManifestSecrets,
+) (serviceadapter.GenerateManifestOutput, error) {
 
 	featureKey := servicePlan.Properties["feature_key"].(string)
 	natsDeploymentName := servicePlan.Properties["nats_deployment"].(string)
@@ -95,30 +96,30 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 												}, servicePlan.InstanceGroups)
 	if err != nil {
 		a.StderrLogger.Println(err.Error())
-		return bosh.BoshManifest{}, errors.New("Contact your operator, service configuration issue occurred")
+		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, service configuration issue occurred")
 	}
 
 	instanceGroups, err := InstanceGroupMapper(servicePlan.InstanceGroups, serviceDeployment.Releases, OnlyStemcellAlias, deploymentInstanceGroupsToJobs)
 	if err != nil {
 		a.StderrLogger.Println(err.Error())
-		return bosh.BoshManifest{}, errors.New("Contact your operator, invalid instance groups")
+		return serviceadapter.GenerateManifestOutput{}, errors.New("Contact your operator, invalid instance groups")
 	}
 
 	arbitraryParameters := requestParams.ArbitraryParams()
 	
 	illegalArbParams := findIllegalArbitraryParams(arbitraryParameters)
 	if len(illegalArbParams) != 0 {
-		return bosh.BoshManifest{}, fmt.Errorf("unsupported parameter(s) : %s", strings.Join(illegalArbParams, ", "))
+		return serviceadapter.GenerateManifestOutput{}, fmt.Errorf("unsupported parameter(s) : %s", strings.Join(illegalArbParams, ", "))
 	}
 
 	invalidArbParams := validateArbitraryParams(arbitraryParameters)
 	if len(invalidArbParams) != 0 {
-		return bosh.BoshManifest{}, fmt.Errorf("invalid parameter(s) : %s", strings.Join(invalidArbParams, ", "))
+		return serviceadapter.GenerateManifestOutput{}, fmt.Errorf("invalid parameter(s) : %s", strings.Join(invalidArbParams, ", "))
 	}
 
 	for _, ns_param := range servicePlanParams {
 		if error_msg, ok := updateServicePlanProperty(&servicePlan, arbitraryParameters, previousManifest, ns_param ); !ok {
-			return bosh.BoshManifest{}, errors.New(error_msg)
+			return serviceadapter.GenerateManifestOutput{}, errors.New(error_msg)
 		}
 	}
 
@@ -150,7 +151,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 
 	if len(aerospike_serverInstanceGroup.Networks) != 1 {
 		a.StderrLogger.Println(fmt.Sprintf("expected 1 network for %s, got %d", aerospike_serverInstanceGroup.Name, len(aerospike_serverInstanceGroup.Networks)))
-		return bosh.BoshManifest{}, errors.New("")
+		return serviceadapter.GenerateManifestOutput{}, errors.New("")
 	}
 
 	aerospike_serverRoute := arbitraryParameters["server_route"]
@@ -198,7 +199,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 			previousInstanceCount := inst_group.Instances
 			if (aerospike_serverInstanceGroup.Instances < previousInstanceCount) {
 				a.StderrLogger.Println("Cannot reduce the size of the Aerospike cluster")
-				return bosh.BoshManifest{}, errors.New("Cannot reduce the size of the Aerospike cluster")
+				return serviceadapter.GenerateManifestOutput{}, errors.New("Cannot reduce the size of the Aerospike cluster")
 			}
 		}
 	}
@@ -222,7 +223,7 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 
 	if len(aerospike_amcInstanceGroup.Networks) != 1 {
 		a.StderrLogger.Println(fmt.Sprintf("expected 1 network for %s, got %d", aerospike_amcInstanceGroup.Name, len(aerospike_serverInstanceGroup.Networks)))
-		return bosh.BoshManifest{}, errors.New("")
+		return serviceadapter.GenerateManifestOutput{}, errors.New("")
 	}
 
 	aerospike_amcJob, _ :=  getJobFromInstanceGroup(AMCJobName, aerospike_amcInstanceGroup)
@@ -280,7 +281,12 @@ func (a *ManifestGenerator) GenerateManifest(serviceDeployment serviceadapter.Se
 		Update:         &updateBlock,
 	}
 
-	return generatedManifest, nil
+
+	manifestOutput := serviceadapter.GenerateManifestOutput {
+		Manifest: generatedManifest,
+		ODBManagedSecrets: serviceadapter.ODBManagedSecrets{},
+	}
+	return manifestOutput, nil
 }
 
 func contains(s []string, e string) bool {
