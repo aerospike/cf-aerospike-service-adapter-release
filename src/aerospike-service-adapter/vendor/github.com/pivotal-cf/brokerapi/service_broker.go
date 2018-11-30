@@ -27,13 +27,16 @@ type ServiceBroker interface {
 
 	Provision(ctx context.Context, instanceID string, details ProvisionDetails, asyncAllowed bool) (ProvisionedServiceSpec, error)
 	Deprovision(ctx context.Context, instanceID string, details DeprovisionDetails, asyncAllowed bool) (DeprovisionServiceSpec, error)
+	GetInstance(ctx context.Context, instanceID string) (GetInstanceDetailsSpec, error)
 
-	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails) (Binding, error)
-	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails) error
+	Bind(ctx context.Context, instanceID, bindingID string, details BindDetails, asyncAllowed bool) (Binding, error)
+	Unbind(ctx context.Context, instanceID, bindingID string, details UnbindDetails, asyncAllowed bool) (UnbindSpec, error)
+	GetBinding(ctx context.Context, instanceID, bindingID string) (GetBindingSpec, error)
 
 	Update(ctx context.Context, instanceID string, details UpdateDetails, asyncAllowed bool) (UpdateServiceSpec, error)
 
-	LastOperation(ctx context.Context, instanceID, operationData string) (LastOperation, error)
+	LastOperation(ctx context.Context, instanceID string, details PollDetails) (LastOperation, error)
+	LastBindingOperation(ctx context.Context, instanceID, bindingID string, details PollDetails) (LastOperation, error)
 }
 
 type DetailsWithRawParameters interface {
@@ -79,6 +82,18 @@ type ProvisionedServiceSpec struct {
 	OperationData string
 }
 
+type GetInstanceDetailsSpec struct {
+	ServiceID    string      `json:"service_id"`
+	PlanID       string      `json:"plan_id"`
+	DashboardURL string      `json:"dashboard_url"`
+	Parameters   interface{} `json:"parameters"`
+}
+
+type UnbindSpec struct {
+	IsAsync       bool
+	OperationData string
+}
+
 type BindDetails struct {
 	AppGUID       string          `json:"app_guid"`
 	PlanID        string          `json:"plan_id"`
@@ -90,6 +105,7 @@ type BindDetails struct {
 
 type BindResource struct {
 	AppGuid            string `json:"app_guid,omitempty"`
+	SpaceGuid          string `json:"space_guid,omitempty"`
 	Route              string `json:"route,omitempty"`
 	CredentialClientID string `json:"credential_client_id,omitempty"`
 }
@@ -101,6 +117,7 @@ type UnbindDetails struct {
 
 type UpdateServiceSpec struct {
 	IsAsync       bool
+	DashboardURL  string
 	OperationData string
 }
 
@@ -129,6 +146,12 @@ type PreviousValues struct {
 	SpaceID   string `json:"space_id"`
 }
 
+type PollDetails struct {
+	ServiceID     string `json:"service_id"`
+	PlanID        string `json:"plan_id"`
+	OperationData string `json:"operation"`
+}
+
 type LastOperation struct {
 	State       LastOperationState
 	Description string
@@ -143,10 +166,20 @@ const (
 )
 
 type Binding struct {
+	IsAsync         bool          `json:"is_async"`
+	OperationData   string        `json:"operation_data"`
 	Credentials     interface{}   `json:"credentials"`
-	SyslogDrainURL  string        `json:"syslog_drain_url,omitempty"`
-	RouteServiceURL string        `json:"route_service_url,omitempty"`
-	VolumeMounts    []VolumeMount `json:"volume_mounts,omitempty"`
+	SyslogDrainURL  string        `json:"syslog_drain_url"`
+	RouteServiceURL string        `json:"route_service_url"`
+	VolumeMounts    []VolumeMount `json:"volume_mounts"`
+}
+
+type GetBindingSpec struct {
+	Credentials     interface{}
+	SyslogDrainURL  string
+	RouteServiceURL string
+	VolumeMounts    []VolumeMount
+	Parameters      interface{}
 }
 
 type VolumeMount struct {
@@ -170,10 +203,12 @@ const (
 	serviceQuotaExceededMsg     = "The quota for this service has been exceeded. Please contact your Operator for help."
 	bindingExistsMsg            = "binding already exists"
 	bindingDoesntExistMsg       = "binding does not exist"
+	bindingNotFoundMsg          = "binding cannot be fetched"
 	asyncRequiredMsg            = "This service plan requires client support for asynchronous service operations."
 	planChangeUnsupportedMsg    = "The requested plan migration cannot be performed"
 	rawInvalidParamsMsg         = "The format of the parameters is not valid JSON"
 	appGuidMissingMsg           = "app_guid is a required field but was not provided"
+	concurrentInstanceAccessMsg = "instance is being updated and cannot be retrieved"
 )
 
 var (
@@ -197,6 +232,10 @@ var (
 		errors.New(bindingDoesntExistMsg), http.StatusGone, bindingMissingErrorKey,
 	).WithEmptyResponse().Build()
 
+	ErrBindingNotFound = NewFailureResponseBuilder(
+		errors.New(bindingNotFoundMsg), http.StatusNotFound, bindingNotFoundErrorKey,
+	).WithEmptyResponse().Build()
+
 	ErrAsyncRequired = NewFailureResponseBuilder(
 		errors.New(asyncRequiredMsg), http.StatusUnprocessableEntity, asyncRequiredKey,
 	).WithErrorKey("AsyncRequired").Build()
@@ -215,4 +254,8 @@ var (
 
 	ErrPlanQuotaExceeded    = errors.New(servicePlanQuotaExceededMsg)
 	ErrServiceQuotaExceeded = errors.New(serviceQuotaExceededMsg)
+
+	ErrConcurrentInstanceAccess = NewFailureResponseBuilder(
+		errors.New(concurrentInstanceAccessMsg), http.StatusUnprocessableEntity, concurrentAccessKey,
+	).WithErrorKey("ConcurrencyError")
 )

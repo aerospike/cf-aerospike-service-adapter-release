@@ -16,20 +16,44 @@
 package bosh
 
 type Job struct {
-	Name       string                  `yaml:"name"`
-	Release    string                  `yaml:"release"`
-	Provides   map[string]ProvidesLink `yaml:"provides,omitempty"`
-	Consumes   map[string]interface{}  `yaml:"consumes,omitempty"`
-	Properties map[string]interface{}  `yaml:"properties,omitempty"`
+	Name                      string                     `yaml:"name"`
+	Release                   string                     `yaml:"release"`
+	Provides                  map[string]ProvidesLink    `yaml:"provides,omitempty"`
+	Consumes                  map[string]interface{}     `yaml:"consumes,omitempty"`
+	CustomProviderDefinitions []CustomProviderDefinition `yaml:"custom_provider_definitions,omitempty"`
+	Properties                map[string]interface{}     `yaml:"properties,omitempty"`
+}
+
+type CustomProviderDefinition struct {
+	Name       string   `yaml:"name"`
+	Type       string   `yaml:"type"`
+	Properties []string `yaml:"properties,omitempty"`
 }
 
 type ProvidesLink struct {
-	As string `yaml:"as"`
+	As     string `yaml:"as,omitempty"`
+	Shared bool   `yaml:"shared,omitempty"`
 }
 
 type ConsumesLink struct {
-	From       string `yaml:"from"`
+	From       string `yaml:"from,omitempty"`
 	Deployment string `yaml:"deployment,omitempty"`
+	Network    string `yaml:"network,omitempty"`
+}
+
+func (j Job) AddCustomProviderDefinition(name, providerType string, properties []string) Job {
+	if j.CustomProviderDefinitions == nil {
+		j.CustomProviderDefinitions = []CustomProviderDefinition{}
+	}
+	j.CustomProviderDefinitions = append(
+		j.CustomProviderDefinitions,
+		CustomProviderDefinition{Name: name, Type: providerType, Properties: properties},
+	)
+	return j
+}
+
+func (j Job) AddSharedProvidesLink(name string) Job {
+	return j.addProvidesLink(name, ProvidesLink{Shared: true})
 }
 
 func (j Job) AddConsumesLink(name, fromJob string) Job {
@@ -49,5 +73,13 @@ func (j Job) addConsumesLink(name string, value interface{}) Job {
 		j.Consumes = map[string]interface{}{}
 	}
 	j.Consumes[name] = value
+	return j
+}
+
+func (j Job) addProvidesLink(name string, providesLink ProvidesLink) Job {
+	if j.Provides == nil {
+		j.Provides = map[string]ProvidesLink{}
+	}
+	j.Provides[name] = providesLink
 	return j
 }

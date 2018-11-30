@@ -2,10 +2,13 @@
 
 
 [[projects]]
+  branch = "master"
   name = "code.cloudfoundry.org/lager"
-  packages = ["."]
-  revision = "b60e04e119450552243196105bae0d42179ee0ca"
-  version = "v1.1.0"
+  packages = [
+    ".",
+    "internal/truncate"
+  ]
+  revision = "baf208c4c56b0a06ddec4a03c0348d072261d43a"
 
 [[projects]]
   name = "github.com/gorilla/context"
@@ -25,8 +28,8 @@
     ".",
     "auth"
   ]
-  revision = "633c7acd4d3a4d5e787c17728ea18b20681bf471"
-  version = "v2.0.3"
+  revision = "4048f6de26b2169b7bc3063076b47964d02045eb"
+  version = "v3.0.7"
 
 [[projects]]
   name = "github.com/pivotal-cf/on-demand-services-sdk"
@@ -34,8 +37,8 @@
     "bosh",
     "serviceadapter"
   ]
-  revision = "8e483f3c40b6afa9be12c75991ff0bafc560c550"
-  version = "v0.21.2"
+  revision = "980106fb549f2e8d7fa20b7c8f998e5d30706188"
+  version = "v0.24.0"
 
 [[projects]]
   name = "github.com/pkg/errors"
@@ -50,14 +53,14 @@
   version = "v8.18.2"
 
 [[projects]]
+  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "51d6538a90f86fe93ac480b35f37b2be17fef232"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ec60138973f5487211038a2872cccd93af93703223b9dcc01bea36cd853df406"
+  inputs-digest = "f4e92a463861c6155555d31d9ffcd4393a7a3edad7ee72b44d0cf0a9e3478447"
   solver-name = "gps-cdcl"
   solver-version = 1

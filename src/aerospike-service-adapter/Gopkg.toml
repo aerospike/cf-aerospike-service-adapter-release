@@ -27,7 +27,7 @@
 
 [[constraint]]
   name = "github.com/pivotal-cf/on-demand-services-sdk"
-  version = "v0.21.2"
+  version = "v0.24.0"
 
 [prune]
   go-tests = true

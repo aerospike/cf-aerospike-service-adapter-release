@@ -21,16 +21,16 @@ import (
 )
 
 type BoshManifest struct {
-	Addons         []Addon                `yaml:"addons,omitempty"`
-	Name           string                 `yaml:"name"`
-	Releases       []Release              `yaml:"releases"`
-	Stemcells      []Stemcell             `yaml:"stemcells"`
-	InstanceGroups []InstanceGroup        `yaml:"instance_groups"`
-	Update         *Update                `yaml:"update"`
-	Properties     map[string]interface{} `yaml:"properties,omitempty"`
-	Variables      []Variable             `yaml:"variables,omitempty"`
-	Tags           map[string]interface{} `yaml:"tags,omitempty"`
-	Features       BoshFeatures           `yaml:"features,omitempty"`
+	Addons         []Addon                `yaml:"addons,omitempty" json:"addons"`
+	Name           string                 `yaml:"name" json:"name"`
+	Releases       []Release              `yaml:"releases" json:"releases"`
+	Stemcells      []Stemcell             `yaml:"stemcells" json:"stemcells"`
+	InstanceGroups []InstanceGroup        `yaml:"instance_groups" json:"instance_groups"`
+	Update         *Update                `yaml:"update" json:"update"`
+	Properties     map[string]interface{} `yaml:"properties,omitempty" json:"properties,omitempty"`
+	Variables      []Variable             `yaml:"variables,omitempty" json:"variables,omitempty"`
+	Tags           map[string]interface{} `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Features       BoshFeatures           `yaml:"features,omitempty" json:"features,omitempty"`
 }
 
 type BoshFeatures struct {
@@ -49,10 +49,31 @@ type Addon struct {
 	Jobs []Job  `yaml:"jobs"`
 }
 
+// Variable represents a variable in the `variables` block of a BOSH manifest
 type Variable struct {
 	Name    string                 `yaml:"name"`
 	Type    string                 `yaml:"type"`
 	Options map[string]interface{} `yaml:"options,omitempty"`
+
+	// Variables of type `certificate` can optionally be configured with a
+	// `consumes` block, so generated certificates can be created with automatic
+	// BOSH DNS records in their Common Name and/or Subject Alternative Names.
+	//
+	// Should be used in conjunction to the `custom_provider_definitions` block in
+	// a Job.
+	//
+	// Requires BOSH v267+
+	Consumes *VariableConsumes `yaml:"consumes,omitempty"`
+}
+
+type VariableConsumes struct {
+	AlternativeName VariableConsumesLink `yaml:"alternative_name,omitempty"`
+	CommonName      VariableConsumesLink `yaml:"common_name,omitempty"`
+}
+
+type VariableConsumesLink struct {
+	From       string                 `yaml:"from"`
+	Properties map[string]interface{} `yaml:"properties,omitempty"`
 }
 
 type Release struct {
@@ -80,6 +101,7 @@ type InstanceGroup struct {
 	Properties         map[string]interface{} `yaml:"properties,omitempty"`
 	MigratedFrom       []Migration            `yaml:"migrated_from,omitempty"`
 	Env                map[string]interface{} `yaml:"env,omitempty"`
+	Update             *Update                `yaml:"update,omitempty"`
 }
 
 type Migration struct {
@@ -105,6 +127,7 @@ type Update struct {
 	UpdateWatchTime string           `yaml:"update_watch_time"`
 	MaxInFlight     MaxInFlightValue `yaml:"max_in_flight"`
 	Serial          *bool            `yaml:"serial,omitempty"`
+	VmStrategy      string           `yaml:"vm_strategy,omitempty"`
 }
 
 type updateAlias Update
