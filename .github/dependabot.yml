@@ -1,0 +1,6 @@
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /src/aerospike-service-adapter/vendor/gopkg.in/yaml.v2
+    schedule:
+      interval: daily
